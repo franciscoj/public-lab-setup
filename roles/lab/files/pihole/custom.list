@@ -1,0 +1,5 @@
+# CHANGEME
+192.168.1.123 raspi.local
+192.168.1.123 pihole.raspi.local
+192.168.1.123 traefik.raspi.local
+192.168.1.123 whoami.raspi.local

@@ -1,0 +1,14 @@
+---
+- hosts: lab
+  become: true
+  roles:
+    - role: common
+      tags: [common, docker]
+    - role: minecraft
+      tags: [minecraft]
+    - role: lab
+      tags: [lab, docker]
+    - role: pivpn
+      tags: [vpn]
+    - role: torrent
+      tags: [torrent]

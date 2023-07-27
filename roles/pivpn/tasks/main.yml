@@ -1,0 +1,31 @@
+- name: create group
+  group:
+    name: pivpn
+    state: present
+- name: create user
+  user:
+    name: pivpn
+    group: pivpn
+    state: present
+- name: copy options file
+  copy:
+    src: files/options.conf
+    dest: /tmp/pivpn-options.conf
+    owner: pivpn
+    group: pivpn
+- name: download install script
+  get_url:
+    url: https://install.pivpn.io
+    dest: /tmp/pivpn-install.sh
+    mode: u+x
+    owner: pivpn
+    group: pivpn
+- name: ensure server isn't running
+  systemd:
+    name: wg-quick@wg0
+    state: stopped
+- name: execute unattended pivpn installation
+  shell:
+  args:
+    cmd: /tmp/pivpn-install.sh --unattended /tmp/pivpn-options.conf
+    chdir: /tmp/

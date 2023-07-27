@@ -1,0 +1,34 @@
+- include_vars: files/secrets.yml
+- name: install transmission
+  apt:
+    pkg:
+      - transmission-daemon
+      - transmission-cli
+    state: present
+- name: stop daemon
+  systemd:
+    name: transmission-daemon
+    state: stopped
+- name: copy config file
+  template:
+    src: files/settings.json.j2
+    dest: /etc/transmission-daemon/settings.json
+    owner: debian-transmission
+    group: debian-transmission
+    mode: u=rw
+- name: create user
+  user:
+    name: torrent
+    group: debian-transmission
+    state: present
+- name: create downloads folder
+  file:
+    path: /home/torrent/downloads
+    state: directory
+    owner: debian-transmission
+    group: debian-transmission
+- name: restart daemon
+  systemd:
+    name: transmission-daemon
+    state: restarted
+    enabled: yes

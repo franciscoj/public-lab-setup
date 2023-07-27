@@ -1,0 +1,25 @@
+- name: ensure en_US.UTF-8 locale exists
+  locale_gen:
+    name: en_US.UTF-8
+    state: present
+- name: set en_US.UTF-8 as default locale
+  command: localectl set-locale en_US.UTF-8
+- name: update packages
+  apt:
+    update_cache: yes
+    upgrade: yes
+- name: install packages
+  apt:
+    pkg:
+      - snapd
+    state: present
+- name: restart snapd server
+  systemd:
+    name: snapd
+    state: restarted
+    enabled: yes
+- name: install neovim
+  snap:
+    name: nvim
+    classic: yes
+    state: present

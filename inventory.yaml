@@ -1,0 +1,5 @@
+lab:
+  hosts:
+    raspi:
+      ansible_host: 192.168.1.123 # CHANGEME
+      ansible_user: pi

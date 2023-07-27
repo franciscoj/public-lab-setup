@@ -1,0 +1,26 @@
+# vi: ft=systemd
+
+[Unit]
+Description=Minecraft server (PaperMC)
+After=network.target
+
+[Service]
+WorkingDirectory=/opt/minecraft
+
+User=minecraft
+Group=minecraft
+
+Restart=always
+
+ExecStart=/usr/bin/screen -DmS minecraft /opt/minecraft/server.sh
+
+ExecStop=/usr/bin/screen -p 0 -S minecraft -X stuff "say EL SERVIDOR SE VA A APAGAR EN 15 SEGUNDOS. GUARDANDO LOS MAPAS...\n"
+ExecStop=/bin/sleep 5s
+ExecStop=/usr/bin/screen -p 0 -S minecraft -X stuff "save-all\n"
+ExecStop=/bin/sleep 10s
+ExecStop=/usr/bin/screen -p 0 -s minecraft -X stuff "say MAPAS GUARDADOS, REINICIANDO EN 5 SEGUNDOS...\n"
+ExecStop=/bin/sleep 5s
+ExecStop=/usr/bin/screen -p 0 -S minecraft -X stuff "stop\n"
+
+[Install]
+WantedBy=multi-user.target

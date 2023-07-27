@@ -1,0 +1,68 @@
+---
+- name: create group
+  group:
+    name: lab
+    state: present
+- name: create user
+  user:
+    name: lab
+    groups: lab,docker
+    append: yes
+    state: present
+- name: install dependencies
+  apt:
+    pkg:
+      - docker.io
+      - docker-compose
+    state: present
+- name: create destination folder
+  file:
+    path: /opt/lab
+    state: directory
+    owner: lab
+    group: lab
+- name: create destination folder for pihole
+  file:
+    path: /opt/lab/pihole
+    state: directory
+    owner: lab
+    group: lab
+- name: copy pihole config
+  copy:
+    src: files/pihole/custom.list
+    dest: /opt/lab/pihole/custom.list
+    owner: lab
+    group: lab
+- name: copy .env
+  copy:
+    src: files/dot_env
+    dest: /opt/lab/.env
+    owner: lab
+    group: lab
+- name: add docker-compose.yml
+  copy:
+    src: files/docker-compose.yml
+    dest: /opt/lab/docker-compose.yml
+    owner: lab
+    group: lab
+- name: check if service exists
+  stat:
+    path: /etc/systemd/system/lab.docker.service
+  register: result
+- name: ensure server isn't running
+  systemd:
+    name: lab.docker
+    state: stopped
+  when: result.stat.exists
+- name: add systemd unit
+  copy:
+    src: files/lab.docker.service
+    dest: /etc/systemd/system/lab.docker.service
+- name: reload systemd
+  systemd:
+    daemon_reload: true
+- name: restart server
+  systemd:
+    name: lab.docker
+    state: restarted
+    enabled: yes

@@ -1,0 +1,63 @@
+version: "3"
+
+services:
+  # Network router
+  traefik:
+    image: "traefik:v2.8"
+    container_name: "traefik"
+    network_mode: "host"
+    command:
+      - "--api.insecure=true"
+      - "--api.dashboard=true"
+      - "--entrypoints.web.address=:80"
+      - "--providers.docker=true"
+      - "--providers.file.watch=true"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.traefik.rule=Host(`traefik`, `traefik.raspi.local`)"
+      - "traefik.http.routers.traefik.entrypoints=web"
+      - "traefik.http.services.traefik.loadbalancer.server.port=8080"
+
+  # Debuging serivice
+  whoami:
+    image: "traefik/whoami"
+    container_name: whoami
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.whoami.rule=Host(`whoami`, `whoami.raspi.local`)"
+      - "traefik.http.routers.whoami.entrypoints=web"
+      - "traefik.http.services.whoami.loadbalancer.server.port=80"
+
+  pihole:
+    container_name: pihole
+    image: pihole/pihole:latest
+    ports:
+      - "192.168.1.123:53:53/tcp" # CHANGEME
+      - "192.168.1.123:53:53/udp" # CHANGEME
+      - "8053:80"
+    environment:
+      TZ: Europe/Madrid
+      WEBPASSWORD: "${PIHOLE_PASSWORD}"
+      DNSMASQ_LISTENING: all
+    volumes:
+      - "/opt/lab/pihole/custom.list:/etc/pihole/custom.list"
+      - "/opt/lab/pihole/etc-pihole:/etc/pihole"
+      - "/opt/lab/pihole/etc-dnsmasq.d:/etc/dnsmasq.d"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.pihole.rule=Host(`pihole`, `pihole.raspi.local`)"
+      - "traefik.http.routers.pihole.entrypoints=web"
+      - "traefik.http.services.pihole.loadbalancer.server.port=80"
+
+  duckdns:
+    image: linuxserver/duckdns:latest
+    container_name: duckdns
+    environment:
+      - TOKEN=${DUCKDNS_TOKEN}
+      - TZ=Europe/Madrid # CHANGEME
+      - SUBDOMAINS=mydomain # CHANGEME

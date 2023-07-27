@@ -1,0 +1,107 @@
+- name: check if minecraft is already installed
+  stat:
+    path: "/etc/systemd/system/minecraft.service"
+  register: result
+- name: ensure server isn't running
+  systemd:
+    name: minecraft
+    state: stopped
+  when: result.stat.exists
+- name: install dependencies
+  apt:
+    pkg:
+      - screen
+      - openjdk-17-jre
+    state: present
+- name: create group
+  group:
+    name: minecraft
+    state: present
+- name: create user
+  user:
+    name: minecraft
+    group: minecraft
+    state: present
+- name: create destination folder
+  file:
+    path: /opt/minecraft
+    state: directory
+    owner: minecraft
+    group: minecraft
+- name: download papermc
+  get_url:
+    url: https://api.papermc.io/v2/projects/paper/versions/1.20.1/builds/71/downloads/paper-1.20.1-71.jar
+    dest: /opt/minecraft/paper.jar
+    checksum: sha256:55bd20831209cf37a2fdaa025cec799284155c24fa1601f0b7285d1f3c379105
+    owner: minecraft
+    group: minecraft
+- name: add server.sh
+  copy:
+    src: files/server.sh
+    dest: /opt/minecraft/server.sh
+    owner: minecraft
+    group: minecraft
+    mode: u+x
+- name: add server.properties
+  copy:
+    src: files/server.properties
+    dest: /opt/minecraft/server.properties
+    owner: minecraft
+    group: minecraft
+- name: create plugins folder
+  file:
+    path: /opt/minecraft/plugins
+    state: directory
+    owner: minecraft
+
+# Downloaded the plugin from
+# https://www.spigotmc.org/resources/ebackup-simple-and-reliable-backups-for-your-server-supports-ftp-sftp.69917/
+- name: install eBackup plugin
+  copy:
+    src: files/ebackup-1.3.1.jar
+    dest: /opt/minecraft/plugins/ebackup.jar
+    owner: minecraft
+    group: minecraft
+- name: add eBackup config folder
+  file:
+    path: /opt/minecraft/plugins/eBackup
+    state: directory
+    owner: minecraft
+    group: minecraft
+- name: add eBackup config
+  copy:
+    src: files/ebackup-config.yml
+    dest: /opt/minecraft/plugins/eBackup/config.yml
+    owner: minecraft
+    group: minecraft
+
+# make sure the service is restarted and it can run
+- name: check if service exists
+  stat:
+    path: "/etc/systemd/system/minecraft.service"
+  register: result
+- name: ensure server isn't running
+  systemd:
+    name: minecraft
+    state: stopped
+  when: result.stat.exists
+- name: accept the EULA
+  copy:
+    src: files/eula.txt
+    dest: /opt/minecraft/eula.txt
+    owner: minecraft
+    group: minecraft
+- name: add systemd unit
+  copy:
+    src: files/minecraft.service
+    dest: /etc/systemd/system/minecraft.service
+- name: "reload systemd"
+  systemd:
+    daemon_reload: true
+
+# I'm not playing minecraft lately, it can be disabled.
+- name: stop
+  systemd:
+    name: minecraft
+    state: started
+    enabled: yes
